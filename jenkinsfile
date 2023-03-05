@@ -54,6 +54,6 @@ catch(e)
 throw e
 }
 finally{
-sendSlackNotificatiobs9currentBuild.result)
+sendSlackNotifications(currentBuild.result)
 }
 }
