@@ -1,3 +1,28 @@
+def sendSlackNotifications(String buildStatus = 'STARTED') {
+  // build status of null means successful
+  buildStatus =  buildStatus ?: 'SUCCESSFUL'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    color = 'YELLOW'
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESSFUL') {
+    color = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    color = 'RED'
+    colorCode = '#FF0000'
+  }
+
+  // Send notifications
+  slackSend (color: colorCode, message: summary)
+}
 node{
     echo "Job name is: ${env.JOB_NAME}"
 //echo "Build Number is: ${env.BUILD_NUMBER}"
@@ -6,6 +31,7 @@ echo "Jenkins Home dir is: ${env.JENKINS_HOME}"
     
     properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), pipelineTriggers([pollSCM('* * * * * ')])])
     def mavenHome=tool name:"maven 3.8.7"
+try{    
  stage('checkout'){
      git branch: 'development', credentialsId: '53af7ab8-6918-44c4-a19e-958aa711a783', url: 'https://github.com/sanjayKumar1705/maven-web-application.git'   
 }
@@ -21,5 +47,12 @@ stage('upload artifact'){
 stage('deploy in tomcat'){sshagent(['a1d450e9-faeb-42b8-ac4b-9d9bfa556fd1']){
     sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.43.179:/opt/apache-tomcat-9.0.71/webapps/"
 } 
+}
+catch(e)
+{currentBuild.result="FAILED"
+throw e
+}
+finally{
+sendSlackNotificatiobs9currentBuild.result)
 }
 }
